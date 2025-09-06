@@ -3,6 +3,7 @@ import random
 
 import chess
 import chess.engine
+
 # If needed on macOS, force a GUI backend BEFORE importing pyplot:
 import matplotlib
 matplotlib.use("QtAgg")
@@ -11,15 +12,13 @@ plt.ion()
 
 from src.transcribe_move import listen, transcribe_audio
 from src.visualize import BoardViewer
+from src.gen_audio import run_gen_audio
 
 # --- Configure Stockfish path & strength ---
 STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", "./stockfish/stockfish-ex")
 ENGINE_TIME_SEC = 0.5         # per-move think time (increase for stronger play)
 ENGINE_SKILL = 15             # 0-20 (may be ignored by some builds)
 HUMAN_PLAYS_WHITE = True      # set False to play Black
-
-
-from src.gen_audio import run_gen_audio
 
 def main():
     board = chess.Board()
@@ -49,7 +48,7 @@ def main():
                 print("Player's turn...")
                 
                 move_audio = listen() # listens for the move audio
-                move_text = transcribe_audio(move_audio) # transcribes move audio into SAN
+                move_text = transcribe_audio(move_audio).split()[0] # transcribes move audio into SAN
                 print("Transcription: ", move_text)
                 
                 if move_text == "resign":
