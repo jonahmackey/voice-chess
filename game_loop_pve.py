@@ -35,9 +35,7 @@ def main():
     engine.configure({"Skill Level": ENGINE_SKILL})
     
     # Make announement at the beginning of the game.
-    run_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. \
-                      Do you want to play a game? Begin by saying your moves out loud. \
-                          I'll let you go first.""")
+    run_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. Do you want to play a game? Begin by saying your moves out loud. I'll let you go first.""")
     
     end_reason = None
     try:
