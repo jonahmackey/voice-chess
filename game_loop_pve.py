@@ -13,6 +13,7 @@ plt.ion()
 from src.transcribe_move import listen, transcribe_audio
 from src.visualize import BoardViewer
 from src.gen_audio import run_gen_audio
+from src.gen_move_description import describe_san_first_person
 
 # --- Configure Stockfish path & strength ---
 STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", "./stockfish/stockfish-ex")
@@ -85,7 +86,9 @@ def main():
                 san = board.san(result.move) # convert move to SAN for TTS
                 print(f"Stockfish plays: {san}")
                 
-                run_gen_audio(f"I will play {san}") # generate and play audio of the engines move
+                side = "white" if board.turn == chess.WHITE else "black"
+                san_description = describe_san_first_person(san, side=side)
+                run_gen_audio(san_description) # generate and play audio of the engines move # generate and play audio of the engines move
                 
                 board.push(result.move) # execute the move
                 viewer.update(board, show_last_move=True) # visualize board
