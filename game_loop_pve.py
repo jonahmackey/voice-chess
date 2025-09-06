@@ -19,6 +19,31 @@ ENGINE_SKILL = 15             # 0-20 (may be ignored by some builds)
 HUMAN_PLAYS_WHITE = True      # set False to play Black
 
 
+from src.gen_audio_from_api import gen_audio_from_api
+from functools import partial
+
+HOST = "ssh8.vast.ai"
+USERNAME = "root"
+PORT = 12812
+KEYFILE_NAME = "~/Projects/team03_private_key"
+LOCAL_PORT = 8000
+REMOTE_HOST = "127.0.0.1"
+REMOTE_PORT =8000
+MODE = "base64" # either base64 or url
+
+run_gen_audio = partial(
+    gen_audio_from_api,
+    temperature=1.0,
+    host=HOST,
+    port=PORT,
+    username=USERNAME,
+    key_filename=KEYFILE_NAME,
+    local_port=LOCAL_PORT,
+    remote_host=REMOTE_HOST,
+    remote_port=REMOTE_PORT,
+    mode=MODE,
+)
+
 # ---------- Background ASR worker ----------
 class ASRWorker(threading.Thread):
     def __init__(self, out_queue: queue.Queue, stop_event: threading.Event):
@@ -46,7 +71,6 @@ def main():
     start_pov = "white" if HUMAN_PLAYS_WHITE else "black"
     viewer = BoardViewer(perspective=start_pov)
     viewer.update(board, show_last_move=False)
-
     # Engine
     engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
     try:
@@ -108,6 +132,7 @@ def main():
                     print("Engine failed to find a move.")
                     break
                 san = board.san(result.move)
+                run_gen_audio(f"I will play {san}")
                 board.push(result.move)
                 print(f"Stockfish plays: {san}")
 

@@ -8,6 +8,26 @@ import matplotlib.pyplot as plt
 from src.transcribe_move import listen, transcribe_audio
 from src.visualize import BoardViewer  # your fixed viewer from above
 
+from src.gen_audio_from_server import gen_audio_from_server
+from functools import partial
+
+HOST = "ssh8.vast.ai"
+USERNAME = "root"
+PORT = 12812
+PRIVATE_KEY = "~/Projects/team03_private_key"
+REMOTE_SCRIPT = "/root/voice-chess/generate_audio.py"
+REMOVE_ENV = "source /workspace/.venv/bin/activate"
+
+run_gen_audio = partial(
+    gen_audio_from_server,
+    host=HOST,
+    username=USERNAME,
+    port=PORT,
+    key_filename=PRIVATE_KEY,
+    remote_script=REMOTE_SCRIPT,
+    remote_env_preamble=REMOVE_ENV,
+)
+
 # ---------- Background ASR worker ----------
 class ASRWorker(threading.Thread):
     def __init__(self, out_queue: queue.Queue, stop_event: threading.Event):
@@ -34,7 +54,9 @@ def main():
     viewer = BoardViewer(perspective="white")
     viewer.update(board, show_last_move=False)
 
-    print("♟️ Starting a new chess game (Player vs. Player)")
+    starting_msg = "Starting a new chess game (Player vs. Player). White to move first."
+    print(starting_msg)
+    run_gen_audio(starting_msg)
     turns = {True: "White", False: "Black"}
     is_white_turn = True
 
@@ -68,6 +90,7 @@ def main():
                 break
 
             print("Transcribed move:", move_text)
+            run_gen_audio(f"Player move: {move_text}")
 
             # Optional: allow simple voice commands like "flip"
             if move_text.lower() in {"flip", "flip board", "flipboard"}:
@@ -79,7 +102,7 @@ def main():
             # Try to execute the SAN move
             try:
                 board.push_san(move_text)
-                print("Move executed.")
+                run_gen_audio("Move executed. ")
                 is_white_turn = not is_white_turn
                 
                 viewer.update(board, show_last_move=True)
