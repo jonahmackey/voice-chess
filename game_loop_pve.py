@@ -19,30 +19,7 @@ ENGINE_SKILL = 15             # 0-20 (may be ignored by some builds)
 HUMAN_PLAYS_WHITE = True      # set False to play Black
 
 
-from src.gen_audio import gen_audio_from_api
-from functools import partial
-
-HOST = "ssh8.vast.ai"
-USERNAME = "root"
-PORT = 12812
-KEYFILE_NAME = "./team03_private_key"
-LOCAL_PORT = 8000
-REMOTE_HOST = "127.0.0.1"
-REMOTE_PORT =8000
-MODE = "base64" # either base64 or url
-
-run_gen_audio = partial(
-    gen_audio_from_api,
-    temperature=1.0,
-    host=HOST,
-    port=PORT,
-    username=USERNAME,
-    key_filename=KEYFILE_NAME,
-    local_port=LOCAL_PORT,
-    remote_host=REMOTE_HOST,
-    remote_port=REMOTE_PORT,
-    mode=MODE,
-)
+from src.gen_audio import run_gen_audio
 
 def main():
     board = chess.Board()
