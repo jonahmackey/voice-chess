@@ -16,6 +16,17 @@ import sounddevice as sd
 import soundfile as sf
 from functools import partial
 
+from functools import partial
+
+HOST = "ssh8.vast.ai"
+USERNAME = "root"
+PORT = 12812
+KEYFILE_NAME = "./team03_private_key"
+LOCAL_PORT = 8000
+REMOTE_HOST = "127.0.0.1"
+REMOTE_PORT =8000
+MODE = "base64" # either base64 or url
+
 
 # --- tiny SSH tunnel helper (local 8000 -> remote 127.0.0.1:8000) ---
 class _Forwarder(threading.Thread):
@@ -128,27 +139,15 @@ def gen_audio_from_api(
             audio = requests.get(url, timeout=600).content
             play_wav_bytes(audio)
 
-if __name__ == "__main__":
-    HOST = "ssh8.vast.ai"
-    USERNAME = "root"
-    PORT = 12812
-    KEYFILE_NAME = "~/Projects/team03_private_key"
-    LOCAL_PORT = 8000
-    REMOTE_HOST = "127.0.0.1"
-    REMOTE_PORT =8000
-    MODE = "base64" # either base64 or url
-
-    run_gen_audio = partial(
-        gen_audio_from_api,
-        temperature=1.0,
-        host=HOST,
-        port=PORT,
-        username=USERNAME,
-        key_filename=KEYFILE_NAME,
-        local_port=LOCAL_PORT,
-        remote_host=REMOTE_HOST,
-        remote_port=REMOTE_PORT,
-        mode=MODE,
-    )
-
-    run_gen_audio(transcript="Hello, this is a test.")
+run_gen_audio = partial(
+    gen_audio_from_api,
+    temperature=1.0,
+    host=HOST,
+    port=PORT,
+    username=USERNAME,
+    key_filename=KEYFILE_NAME,
+    local_port=LOCAL_PORT,
+    remote_host=REMOTE_HOST,
+    remote_port=REMOTE_PORT,
+    mode=MODE,
+)
