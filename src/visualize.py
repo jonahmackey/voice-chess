@@ -46,7 +46,10 @@ class BoardViewer:
         else:
             return 7 - vx, 7 - vy
 
-    def update(self, board: chess.Board, show_last_move: bool = True):
+    def update(self, board: chess.Board, show_last_move: bool = True, text: str | None = None):
+        """
+        Redraw the board. If `text` is provided, it is displayed centered above the board.
+        """
         if not self.is_open():
             self._init_fig()
 
@@ -96,8 +99,17 @@ class BoardViewer:
             label = chr(ord('a') + vx) if self.perspective == "white" else chr(ord('h') - vx)
             ax.text(vx + 0.5, -0.3, label, fontsize=14, ha='center', va='top')
 
-        ax.set_xlim(-0.5, 8)
-        ax.set_ylim(-0.5, 8)
+        # --- Optional caption above the board ---
+        if text:
+            # Give a bit of extra headroom and draw the text centered
+            ax.set_xlim(-0.5, 8)
+            ax.set_ylim(-0.5, 8.9)  # was 8; add ~0.9 for the caption
+            ax.text(3.5 + 0.5, 8.55, text,
+                    ha='center', va='bottom', fontsize=14,
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, linewidth=0))
+        else:
+            ax.set_xlim(-0.5, 8)
+            ax.set_ylim(-0.5, 8)
 
         # The crucial trio:
         self.fig.canvas.draw_idle()
