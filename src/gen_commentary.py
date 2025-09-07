@@ -8,26 +8,14 @@ MODEL = "qwen3-30b-a3b-thinking-fp8"  # use the exact id your server exposes
 import re
 from typing import Optional
 
-def extract_last_answer_after_think(text: str) -> Optional[str]:
+def extract_answer(text: str) -> Optional[str]:
     """
-    Returns the last substring between <answer> and </answer> that occurs
-    AFTER the final </think> tag. If not found (or no </think>), returns None.
-    Tag matching is case-insensitive and spans newlines.
+    Returns the substring between <answer> and </answer>.
+    If no such tagged section exists, returns None.
+    Matches across newlines and is case-insensitive for the tags.
     """
-    # Find the end position of the last </think>
-    last_think_end = -1
-    for m in re.finditer(r"</think\s*>", text, flags=re.IGNORECASE):
-        last_think_end = m.end()
-    if last_think_end == -1:
-        return None  # no </think> present
-
-    # Find all <answer>...</answer> AFTER that position
-    pattern = re.compile(r"<answer\s*>(.*?)</answer\s*>", re.IGNORECASE | re.DOTALL)
-    matches = list(pattern.finditer(text, pos=last_think_end))
-    if not matches:
-        return None
-
-    return matches[-1].group(1).strip()
+    m = re.search(r"<answer>(.*?)</answer>", text, flags=re.DOTALL | re.IGNORECASE)
+    return m.group(1) if m else None
 
 
 system_prompt = """
@@ -62,7 +50,7 @@ def chat(board_content: str, **kwargs):
     data = r.json()
     # Most OpenAI-compatible servers return the text here:
     generated_text = data["choices"][0]["message"]["content"]
-    final_text = extract_last_answer_after_think(generated_text)
+    final_text = extract_answer(generated_text)
     if final_text is None:
         return "No comment."
     else:
