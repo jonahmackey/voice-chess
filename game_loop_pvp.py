@@ -31,7 +31,7 @@ def main():
     viewer.update(board, show_last_move=False, text="Game start")
     
     # Make announement at the beginning of the game.
-    # run_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. You guys can start playing your game by saying your moves out loud.""")
+    run_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. You guys can start playing your game by saying your moves out loud.""")
     
     # Track whose turn it is
     turns = {True: "White", False: "Black"}
@@ -74,10 +74,7 @@ def main():
                 move = board.parse_san(move_text)
                 board.push_san(move_text)
                 node = node.add_main_variation(move)
-                
-                if random.random() < 0.8:
-                    comment = chat(str(game), max_tokens=256)
-                    run_gen_audio(comment)
+
                     
                 print("Move executed")
                 
@@ -88,6 +85,12 @@ def main():
                 continue
             
             viewer.update(board, show_last_move=True, text=f"{player} move: {move_text}") # visualize board
+            
+            if random.random() < 0.5:
+                    comment = chat(str(game), max_tokens=2048)
+                    print("Commentary: ", comment)
+                    run_gen_audio(comment)
+                    
             viewer.flip()
             time.sleep(0.5)
             viewer.update(board, show_last_move=True, text=f"{player} move: {move_text}") # visualize board
@@ -113,8 +116,8 @@ def main():
         }
         
         result = board.result() if end_reason is None else end_reason
-        viewer.update(board, show_last_move=True, text=board_results.get(result, "Game over!"))
-        run_gen_audio(title_results.get(result, "Game over!"))
+        viewer.update(board, show_last_move=True, text=title_results.get(result, "Game over!"))
+        run_gen_audio(board_results.get(result, "Game over!"))
         
     except KeyboardInterrupt:
         print("\nGame interrupted.")
