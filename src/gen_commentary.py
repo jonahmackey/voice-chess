@@ -5,6 +5,30 @@ import requests
 BASE_URL = "http://20.66.111.167:31022/v1/chat/completions"
 MODEL = "qwen3-30b-a3b-thinking-fp8"  # use the exact id your server exposes
 
+import re
+from typing import Optional
+
+def extract_last_answer_after_think(text: str) -> Optional[str]:
+    """
+    Returns the last substring between <answer> and </answer> that occurs
+    AFTER the final </think> tag. If not found (or no </think>), returns None.
+    Tag matching is case-insensitive and spans newlines.
+    """
+    # Find the end position of the last </think>
+    last_think_end = -1
+    for m in re.finditer(r"</think\s*>", text, flags=re.IGNORECASE):
+        last_think_end = m.end()
+    if last_think_end == -1:
+        return None  # no </think> present
+
+    # Find all <answer>...</answer> AFTER that position
+    pattern = re.compile(r"<answer\s*>(.*?)</answer\s*>", re.IGNORECASE | re.DOTALL)
+    matches = list(pattern.finditer(text, pos=last_think_end))
+    if not matches:
+        return None
+
+    return matches[-1].group(1).strip()
+
 
 system_prompt = """
 You are Magnus Carlsen. 
@@ -37,4 +61,9 @@ def chat(board_content: str, **kwargs):
     r.raise_for_status()
     data = r.json()
     # Most OpenAI-compatible servers return the text here:
-    return data["choices"][0]["message"]["content"]
+    generated_text = data["choices"][0]["message"]["content"]
+    final_text = extract_last_answer_after_think(generated_text)
+    if final_text is None:
+        return "No comment."
+    else:
+        return final_text
