@@ -14,6 +14,7 @@ from src.transcribe_move import listen, transcribe_audio
 from src.visualize import BoardViewer
 from src.gen_audio import run_gen_audio
 from src.gen_commentary import chat
+from src.gen_move_description import describe_san
 
 # --- Game settings ---
 HUMAN_WHITE_NAME = "White"
@@ -79,7 +80,7 @@ def main():
                 print("Move executed")
                 
             except ValueError:
-                run_gen_audio("That's not a legal move. Please try again.")
+                run_gen_audio(f"Did you try to play {describe_san(move_text)}? That isn't a legal move. Please try again.")
                 print("Invalid move:", move_text, "— please try again.")
                 viewer.update(board, show_last_move=True, text=f"Player move: {move_text} - Invalid!")
                 continue
