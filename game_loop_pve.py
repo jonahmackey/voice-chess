@@ -103,7 +103,12 @@ def main():
         }
         
         result = board.result() if end_reason is None else end_reason
-        viewer.update(board, show_last_move=True, text=board_results.get(result, "Game over!"))
+        if end_reason == "draw":
+            show_last_move = False
+        else:
+            show_last_move = True
+            
+        viewer.update(board, show_last_move=show_last_move, text=board_results.get(result, "Game over!"))
         run_gen_audio(board_results.get(result, "Game over!"))
         
     except KeyboardInterrupt:
