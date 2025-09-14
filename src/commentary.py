@@ -1,12 +1,29 @@
 import json
 import requests
-    
-
-BASE_URL = "http://20.66.111.167:31022/v1/chat/completions"
-MODEL = "qwen3-30b-a3b-thinking-fp8"  # use the exact id your server exposes
+import os
 
 import re
 from typing import Optional
+
+
+# Config
+BASE_URL = os.getenv(
+    "GEN_COMMENTARY_URL",
+    "http://localhost:8000/v1/chat/completions"
+)
+MODEL = os.getenv(
+    "GEN_COMMENTARY_MODEL",
+    "qwen3-30b-a3b-thinking-fp8"
+)
+
+
+system_prompt = """
+You are a chess commentator. 
+Given the current board position in a string representation, provide a very short comment of the game. 
+Provide your response in exactly one sentence in the shortest possible way. 
+Please provide your answer between <answer> and </answer> tags.
+"""
+
 
 def extract_last_answer_after_think(text: str) -> Optional[str]:
     """
@@ -30,15 +47,20 @@ def extract_last_answer_after_think(text: str) -> Optional[str]:
     return matches[-1].group(1).strip()
 
 
-system_prompt = """
-You are a chess commentator. 
-Given the current board position in a string representation, provide a very short comment of the game. 
-Provide your response in exactly one sentence in the shortest possible way. 
-Please provide your answer between <answer> and </answer> tags.
-"""
-
-
 def chat(board_content: str, **kwargs):
+    """
+    Generate commentary for a given board state.
+
+    Args:
+        board_content: A string describing the board (e.g., FEN or ASCII).
+        **kwargs: Optional overrides for generation parameters:
+            - max_tokens (int)
+            - temperature (float)
+            - top_p (float)
+
+    Returns:
+        A one-sentence commentary string.
+    """
     messages = [
     {"role": "system", "content": system_prompt},
     {"role": "user", "content": board_content},

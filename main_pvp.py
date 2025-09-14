@@ -4,19 +4,18 @@ import chess.pgn
 import time
 import random
 
-# If needed on macOS, force a GUI backend BEFORE importing pyplot:
 import matplotlib
 matplotlib.use("QtAgg")
 import matplotlib.pyplot as plt
 plt.ion()
 
-from src.transcribe_move import listen, transcribe_audio
+from transcribe import listen, transcribe_audio
 from src.visualize import BoardViewer
-from src.gen_audio import run_gen_audio
-from src.gen_commentary import chat
-from src.gen_move_description import describe_san
+from src.gen_audio import play_gen_audio
+from commentary import chat
+from describe_move import describe_san
 
-# --- Game settings ---
+# Game settings
 HUMAN_WHITE_NAME = "White"
 HUMAN_BLACK_NAME = "Black"
 
@@ -32,7 +31,7 @@ def main():
     viewer.update(board, show_last_move=False, text="Game start")
     
     # Make announement at the beginning of the game.
-    run_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. You guys can start playing your game by saying your moves out loud.""")
+    play_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. You guys can start playing your game by saying your moves out loud.""")
     
     # Track whose turn it is
     turns = {True: "White", False: "Black"}
@@ -76,21 +75,21 @@ def main():
                 board.push_san(move_text)
                 node = node.add_main_variation(move)
 
-                    
                 print("Move executed")
                 
             except ValueError:
-                run_gen_audio(f"Did you try to play {describe_san(move_text)}? That isn't a legal move. Please try again.")
+                play_gen_audio(f"Did you try to play {describe_san(move_text)}? That isn't a legal move. Please try again.")
                 print("Invalid move:", move_text, "— please try again.")
                 viewer.update(board, show_last_move=True, text=f"Player move: {move_text} - Invalid!")
                 continue
             
             viewer.update(board, show_last_move=True, text=f"{player} move: {move_text}") # visualize board
             
+            # Porvide commentary on the game (50% chance)
             if random.random() < 0.5:
                     comment = chat(str(game), max_tokens=2048)
                     print("Commentary: ", comment)
-                    run_gen_audio(comment)
+                    play_gen_audio(comment)
                     
             viewer.flip()
             time.sleep(0.5)
@@ -122,7 +121,7 @@ def main():
         else:
             show_last_move = True
         viewer.update(board, show_last_move=show_last_move, text=title_results.get(result, "Game over!"))
-        run_gen_audio(board_results.get(result, "Game over!"))
+        play_gen_audio(board_results.get(result, "Game over!"))
         
     except KeyboardInterrupt:
         print("\nGame interrupted.")

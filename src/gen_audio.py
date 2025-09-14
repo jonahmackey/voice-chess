@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 import argparse
 import base64
@@ -18,17 +17,19 @@ from functools import partial
 
 from functools import partial
 
-HOST = "ssh8.vast.ai"
-USERNAME = "root"
-PORT = 12812
-KEYFILE_NAME = "./team03_private_key"
-LOCAL_PORT = 8000
-REMOTE_HOST = "127.0.0.1"
-REMOTE_PORT =8000
-MODE = "base64" # either base64 or url
+
+# Environment config
+HOST = os.getenv("GEN_AUDIO_HOST", "localhost")
+PORT = int(os.getenv("GEN_AUDIO_PORT", "8000"))
+USERNAME = os.getenv("GEN_AUDIO_USER", "root")
+KEYFILE_NAME = os.getenv("GEN_AUDIO_KEYFILE", "~/.ssh/id_rsa")
+LOCAL_PORT = int(os.getenv("GEN_AUDIO_LOCAL_PORT", "8000"))
+REMOTE_HOST = os.getenv("GEN_AUDIO_REMOTE_HOST", "127.0.0.1")
+REMOTE_PORT = int(os.getenv("GEN_AUDIO_REMOTE_PORT", "8000"))
+MODE = os.getenv("GEN_AUDIO_MODE", "base64")  # "base64" or "url"
 
 
-# --- tiny SSH tunnel helper (local 8000 -> remote 127.0.0.1:8000) ---
+# SSH tunnel helper
 class _Forwarder(threading.Thread):
     def __init__(self, transport, local_host, local_port, remote_host, remote_port):
         super().__init__(daemon=True)
@@ -47,8 +48,20 @@ class _Forwarder(threading.Thread):
             pass
 
 @contextmanager
-def ssh_tunnel(host: str, port: int, username: str, key_filename: Optional[str], password: Optional[str],
-               local_port: int, remote_host: str, remote_port: int):
+def ssh_tunnel(
+    host: str, 
+    port: int, 
+    username: str, 
+    key_filename: Optional[str], 
+    password: Optional[str],
+    local_port: int, 
+    remote_host: str, 
+    remote_port: int
+):
+    """
+    Open an SSH tunnel from localhost:<local_port> to remote_host:remote_port.
+    """
+    
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(
@@ -80,6 +93,7 @@ def ssh_tunnel(host: str, port: int, username: str, key_filename: Optional[str],
 
 
 def play_wav_bytes(wav_bytes: bytes):
+    """Play WAV audio from raw bytes."""
     mem = io.BytesIO(wav_bytes)
     with sf.SoundFile(mem, mode="r") as f:
         audio = f.read(dtype="float32")
@@ -91,18 +105,28 @@ def play_wav_bytes(wav_bytes: bytes):
 def gen_audio_from_api(
     transcript: Optional[str] = None,
     temperature: float = 1.0,
-    host: str = "ssh8.vast.ai",
-    port: int = 12812,
-    username: str = "root",
-    key_filename: str = "~/Projects/team03_private_key",
-    password=None,
-    local_port=8000,
-    remote_host="127.0.0.1",
-    remote_port=8000,
-    mode: str = "base64", # either base64 or url
+    host: str = HOST,
+    port: int = PORT,
+    username: str = USERNAME,
+    key_filename: str = KEYFILE_NAME,
+    password: Optional[str] = None,
+    local_port: int = LOCAL_PORT,
+    remote_host: str = REMOTE_HOST,
+    remote_port: str = REMOTE_PORT,
+    mode: str = MODE, # either base64 or url
     ):
+    """
+    Generate audio from text via remote API.
 
-    # Create SSH tunnel: localhost:<local-port> -> remote 127.0.0.1:8000
+    Args:
+        transcript: The text to be converted into speech.
+        temperature: Sampling temperature for generation.
+        host/port/username/key_filename: SSH connection details.
+        local_port/remote_host/remote_port: Tunnel settings.
+        mode: "base64" (default) or "url" for audio retrieval.
+
+    Side effect: Plays the generated audio locally.
+    """
     with ssh_tunnel(
         host=host,
         port=port,
@@ -135,11 +159,12 @@ def gen_audio_from_api(
             if not url:
                 print("No audio_url in response", file=sys.stderr)
                 sys.exit(3)
-            # fetch through the same tunnel
+            
             audio = requests.get(url, timeout=600).content
             play_wav_bytes(audio)
 
-run_gen_audio = partial(
+# Wrapper with default args
+play_gen_audio = partial(
     gen_audio_from_api,
     temperature=1.0,
     host=HOST,

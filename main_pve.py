@@ -10,14 +10,16 @@ matplotlib.use("QtAgg")
 import matplotlib.pyplot as plt
 plt.ion() 
 
-from src.transcribe_move import listen, transcribe_audio
+from src.transcribe import transcribe_audio
+from src.audio_utils import listen
 from src.visualize import BoardViewer
-from src.gen_audio import run_gen_audio
-from src.gen_move_description import describe_san_first_person, describe_san
+from src.gen_audio import play_gen_audio
+from describe_move import describe_san_first_person, describe_san
 
-# --- Configure Stockfish path & strength ---
+
+# Configure Stockfish path & strength 
 STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", "./stockfish/stockfish-ex")
-ENGINE_TIME_SEC = 1         # per-move think time (increase for stronger play)
+ENGINE_TIME_SEC = 0.5        # per-move think time (increase for stronger play)
 ENGINE_SKILL = 15             # 0-20 (may be ignored by some builds)
 HUMAN_PLAYS_WHITE = True      # set False to play Black
 
@@ -35,7 +37,7 @@ def main():
     engine.configure({"Skill Level": ENGINE_SKILL})
     
     # Make announement at the beginning of the game.
-    run_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. Do you want to play a game? Begin by saying your moves out loud. I'll let you go first.""")
+    play_gen_audio("""Welcome to Voice Chess! This is Magnus Carlsen speaking. Do you want to play a game? Begin by saying your moves out loud. I'll let you go first.""")
     
     end_reason = None
     try:
@@ -60,7 +62,7 @@ def main():
                         viewer.update(board, show_last_move=True, text=f"Accepted")
                         break
                     else:
-                        run_gen_audio("I decline your draw offer. Let's continue.")
+                        play_gen_audio("I decline your draw offer. Let's continue.")
                         viewer.update(board, show_last_move=True, text=f"Draw offer declined")
                         continue
                 
@@ -69,7 +71,7 @@ def main():
                     print("Move executed")
                     viewer.update(board, show_last_move=True, text=f"Player move: {move_text}") # visualize board
                 except ValueError:
-                    run_gen_audio(f"Did you try to play {describe_san(move_text)}? That isn't a legal move. Please try again.")
+                    play_gen_audio(f"Did you try to play {describe_san(move_text)}? That isn't a legal move. Please try again.")
                     print("Invalid move:", move_text, "— please try again.")
                     viewer.update(board, show_last_move=True, text=f"Player move: {move_text} - Invalid!")
                     continue
@@ -89,7 +91,7 @@ def main():
                 
                 side = "white" if board.turn == chess.WHITE else "black"
                 san_description = describe_san_first_person(san, side=side)
-                run_gen_audio(san_description) # generate and play audio of the engines move # generate and play audio of the engines move
+                play_gen_audio(san_description) # generate and play audio of the engines move # generate and play audio of the engines move
                 
                 board.push(result.move) # execute the move
                 viewer.update(board, show_last_move=True, text=f"Engine move: {san}") # visualize board
@@ -109,7 +111,7 @@ def main():
             show_last_move = True
             
         viewer.update(board, show_last_move=show_last_move, text=board_results.get(result, "Game over!"))
-        run_gen_audio(board_results.get(result, "Game over!"))
+        play_gen_audio(board_results.get(result, "Game over!"))
         
     except KeyboardInterrupt:
         print("\nGame interrupted by user.")
