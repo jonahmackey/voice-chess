@@ -15,7 +15,7 @@ We had access to both the [Higgs Audio V2 generation model](https://www.boson.ai
 
 ## How It works
 
-We provide two modes to play voice chess:
+### Modes
 * Player vs. Engine (`main_pve.py`)
 * Player vs. Player (`main_pvp.py`)
 
@@ -67,7 +67,7 @@ voice-chess/
 
 ### Requirements
 - Python 3.10+
-- [Stockfish](https://stockfishchess.org/download/) installed and available on PATH
+- [Stockfish](https://stockfishchess.org/download/) installed and available at `./stockfish/stockfish-ex`.
 - A microphone and speakers/headphones
 
 ### Setup
